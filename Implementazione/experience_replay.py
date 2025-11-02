@@ -3,7 +3,7 @@ import random
 
 class ReplayMemory(object):
 
-    def __init__(self, capacity):
+    def __init__(self, capacity, seed=None):
         self.memory = deque([], maxlen=capacity)
 
         if seed is not None:

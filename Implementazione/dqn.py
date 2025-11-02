@@ -3,9 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 
 
-print(torch.__version__)
-print(torch.version.cuda)  # mostra la versione di CUDA collegata
-print(torch.cuda.is_available())  # dice se PyTorch può usare la GPU
+#print(torch.__version__)
+#print(torch.version.cuda)  # mostra la versione di CUDA collegata
+#print(torch.cuda.is_available())  # dice se PyTorch può usare la GPU
 
 class DQN(nn.Module):
 

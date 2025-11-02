@@ -1,7 +1,10 @@
-frozen_lake:
+FrozenLake-v1:
   env_id: "FrozenLake-v1"
   replay_memory_size: 100000
-  minibatch_size: 32
+  mini_batch_size: 32
   epsilon_init: 1.0
-  epsilon_decay: 0.995
+  epsilon_decay: 0.9995
   epsilon_min: 0.05
+  network_sync_rate: 10
+  learning_rate: 0.0001
+  discount_factor: 0.99
