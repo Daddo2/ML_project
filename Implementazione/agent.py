@@ -7,6 +7,8 @@ from experience_replay import ReplayMemory
 import yaml
 import random
 
+import matplotlib.pyplot as plt
+import pandas as pd 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -103,24 +105,54 @@ class Agent:
                 if step_count > self.network_sync_rate:
                     target.load_state_dict(policy.state_dict())
                     step_count = 0
+        
+        if is_training:
+            torch.save(policy.state_dict(), "frozenlake_dqn_policy.pt")
+            print("✅ Modello salvato in 'frozenlake_dqn_policy.pt'")
+        
+         # Grafico reward per episodio
+        plt.figure(figsize=(10, 5))
+        plt.plot(range(1, len(reward_for_episode) + 1), reward_for_episode, label='Reward per episodio')
+        plt.xlabel('Episodio')
+        plt.ylabel('Reward')
+        plt.title('Reward per episodio durante l\'addestramento')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+        # Grafico epsilon decay
+        plt.figure(figsize=(10, 5))
+        plt.plot(range(1, len(epsilon_history) + 1), epsilon_history, label='Epsilon')
+        plt.xlabel('Episodio')
+        plt.ylabel('Epsilon')
+        plt.title('Epsilon decay per episodio')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
     
     def train_step(self, mini_batch, policy, target):
 
-        for state, action, new_state, reward, terminated in mini_batch:
+        states, actions , new_states, rewards, terminations =  zip(*mini_batch)
 
-            if terminated:
-                target = reward
-            else:
-                with torch.no_grad():
-                    targer_q = reward + self.discount_factor * target(new_state).max()
+        states = torch.stack(states).to(device)
+        new_states = torch.stack(new_states).to(device)
+        actions = torch.tensor(
+            [a.item() if isinstance(a, torch.Tensor) else a for a in actions],
+            dtype=torch.int64
+        ).to(device).view(-1, 1)
+        rewards = torch.stack(rewards).float().unsqueeze(1).to(device)
+        terminations = torch.tensor(terminations, dtype=torch.float32).unsqueeze(1).to(device)
+
+        with torch.no_grad():
+            target_q = rewards + (1 - terminations) * self.discount_factor * target(new_states).max(dim=1)[0]
             
-            current_q = policy(state)
+        current_q = policy(states).gather(1, actions)
 
-            loss = self.loss_fn(current_q, targer_q)
+        loss = self.loss_fn(current_q, target_q)
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
 
 if __name__ == '__main__':
